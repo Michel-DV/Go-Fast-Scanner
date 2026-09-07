@@ -1,0 +1,32 @@
+name: Publish portfolio release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Publish v2.0.0
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.before }}
+        run: |
+          tag="v2.0.0"
+          if ! git rev-parse "$tag" >/dev/null 2>&1; then
+            git tag -a "$tag" "$TARGET_SHA" -m "Go-Fast-Scanner v2.0.0"
+            git push origin "$tag"
+          fi
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --verify-tag --title "Go-Fast-Scanner v2.0.0" --notes "Concurrent TCP connect scanner in Go with validated port ranges, bounded workers, context cancellation, IPv4/IPv6-safe addressing, JSON output, tests and CI."
+          fi
